@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master ]
   pull_request:
-    branches:[ main, master ]
+    branches: [ main, master ]
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
