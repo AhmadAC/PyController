@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: micropython/micropython
-          ref: master  # Using master ensures we have the latest features
+          ref: master
           path: micropython
 
       - name: Install System Dependencies
@@ -30,7 +30,6 @@ jobs:
 
       - name: Setup ESP-IDF
         run: |
-          # MicroPython now requires ESP-IDF v5.3.x or higher!
           git clone -b v5.3.1 --recursive https://github.com/espressif/esp-idf.git
           cd esp-idf
           ./install.sh
@@ -45,13 +44,11 @@ jobs:
           source esp-idf/export.sh
           cd micropython/ports/esp32
           
-          # Fetch submodules specifically for the S3 board
           make BOARD=ESP32_GENERIC_S3 submodules
           
-          # Compile the standard ESP32-S3 Generic board but inject your LCD C Modules
-          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=../../../pycontroller/usermod/micropython.cmake -j$(nproc)
+          # This is the corrected line:
+          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=../pycontroller/usermod/micropython.cmake -j$(nproc)
           
-          # Rename the output to match standard MicroPython formatting
           BUILD_DATE=$(date +%Y%m%d)
           cd build-ESP32_GENERIC_S3
           mv firmware.bin ESP32-S3_GENERIC_S3-${BUILD_DATE}-v1.28.0.bin
