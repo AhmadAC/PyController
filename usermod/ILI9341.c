@@ -804,9 +804,10 @@ static const mp_rom_map_elem_t ILI9341_locals_dict_table[] = {
 };
 static MP_DEFINE_CONST_DICT(ILI9341_locals_dict, ILI9341_locals_dict_table);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-const mp_obj_type_t ILI9341_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_ILI9341,
-    .make_new = ILI9341_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ILI9341_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    ILI9341_type,
+    MP_QSTR_ILI9341,
+    MP_TYPE_FLAG_NONE,
+    make_new, ILI9341_make_new,
+    locals_dict, &ILI9341_locals_dict
+);

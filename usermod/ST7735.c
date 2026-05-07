@@ -710,9 +710,10 @@ static const mp_rom_map_elem_t ST7735_locals_dict_table[] = {
 };
 static MP_DEFINE_CONST_DICT(ST7735_locals_dict, ST7735_locals_dict_table);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-const mp_obj_type_t ST7735_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_ST7735,
-    .make_new = ST7735_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ST7735_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    ST7735_type,
+    MP_QSTR_ST7735,
+    MP_TYPE_FLAG_NONE,
+    make_new, ST7735_make_new,
+    locals_dict, &ST7735_locals_dict
+);
