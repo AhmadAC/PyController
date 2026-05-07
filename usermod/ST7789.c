@@ -38,10 +38,12 @@
 #include "global.h"
 #include "modtftlcd.h"
 
-// Explicitly loaded
+#ifdef MICROPY_PY_PICLIB
 #include "piclib.h"
 #define PICLIB_PY_QSTR (1)
-
+#else
+#define PICLIB_PY_QSTR (0)
+#endif
 
 /*The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct. */
 typedef struct {
@@ -598,6 +600,7 @@ static mp_obj_t ST7789_write_buf(size_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(ST7789_write_buf_obj, 1, 6, ST7789_write_buf);
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
+#if MICROPY_PY_PICLIB
 static mp_obj_t ST7789_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
   static const mp_arg_t ILI9341_allowed_args[] = { 
@@ -668,6 +671,7 @@ static mp_obj_t ST7789_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_m
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawPicture_obj, 1, ST7789_drawPicture);
+#endif
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
 static mp_obj_t ST7789_deinit(mp_obj_t self_in) {
@@ -690,25 +694,4 @@ static mp_obj_t ST7789_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 	lcd_spibus_t *self = m_new_obj(lcd_spibus_t);
 	
 	lcddev.width=240;
-	lcddev.height=240;
-	st7789_glcd.width = lcddev.width;
-	st7789_glcd.height = lcddev.height;
-	
-	mp_init_ST7789();
-	
-	self = p_st7789;
-	self->base.type = type;
-	
-	st7789_set_dir(args[ARG_portrait].u_int);
-	
-	lcddev.type = 5;
-	lcddev.backcolor = 0x0000;
-
-	st7789_Fill(0,0,lcddev.width,lcddev.height,lcddev.backcolor);
-
-	lcddev.clercolor = lcddev.backcolor;
-	draw_global = &st7789_glcd;
-	return MP_OBJ_FROM_PTR(self);
-}
-//---------------------------华丽的分割线-------------------------------------------------------------------
-static const mp_rom_map_elem_t ST7789_locals_dict_table
+	lcddev.heigh
