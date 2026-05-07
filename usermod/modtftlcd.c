@@ -17,7 +17,7 @@
 #include "mpconfigboard.h"
 #include "modmachine.h"
 #include "extmod/vfs.h"
-#include "extmod/utime_mphal.h"
+// #include "extmod/utime_mphal.h"
 #include "py/obj.h"
 #include "py/builtin.h"
 #include "py/stream.h"
