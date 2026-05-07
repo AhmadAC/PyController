@@ -46,8 +46,8 @@ jobs:
           
           make BOARD=ESP32_GENERIC_S3 submodules
           
-          # This is the corrected line:
-          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=../pycontroller/usermod/micropython.cmake -j$(nproc)
+          # Use $GITHUB_WORKSPACE to cleanly point to the absolute path
+          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=$GITHUB_WORKSPACE/pycontroller/usermod/micropython.cmake -j$(nproc)
           
           BUILD_DATE=$(date +%Y%m%d)
           cd build-ESP32_GENERIC_S3
