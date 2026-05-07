@@ -2,7 +2,7 @@ name: Build pyController Firmware
 
 on:
   push:
-    branches: [ main, master ]
+    branches:[ main, master ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch: 
@@ -46,8 +46,8 @@ jobs:
           
           make BOARD=ESP32_GENERIC_S3 submodules
           
-          # Pass the directory to USER_C_MODULES
-          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=$GITHUB_WORKSPACE/pycontroller/usermod -j$(nproc)
+          # Pass the explicit micropython.cmake path to USER_C_MODULES
+          make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=$GITHUB_WORKSPACE/pycontroller/usermod/micropython.cmake -j$(nproc)
           
           BUILD_DATE=$(date +%Y%m%d)
           cd build-ESP32_GENERIC_S3
