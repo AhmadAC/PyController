@@ -1,4 +1,3 @@
-
 /********************************************************************************
 	* Copyright (C), 2022 -2023, 01studio Tech. Co., Ltd.https://www.01studio.cc/
 	* File Name				:	ST7735.c
@@ -34,20 +33,14 @@
 #include "py/stream.h"
 #include "shared/runtime/pyexec.h"
 
-#if (MICROPY_HW_LCD18 & MICROPY_ENABLE_TFTLCD)
-	
 #include "lcd_spibus.h"
 #include "modtftlcd.h"
 #include "ST7735.h"
-
 #include "global.h"
 
-#ifdef MICROPY_PY_PICLIB
+// Explicitly loaded
 #include "piclib.h"
 #define PICLIB_PY_QSTR (1)
-#else
-#define PICLIB_PY_QSTR (0)
-#endif
 
 /*The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct. */
 typedef struct {
@@ -591,9 +584,6 @@ static mp_obj_t ST7735_drawStr(size_t n_args, const mp_obj_t *pos_args, mp_map_t
 static MP_DEFINE_CONST_FUN_OBJ_KW(ST7735_drawStr_obj, 1, ST7735_drawStr);
 //---------------------------华丽的分割线-------------------------------------------------------------------
 
-#if MICROPY_PY_PICLIB
-
-//---------------------------华丽的分割线-------------------------------------------------------------------
 static mp_obj_t ST7735_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
   static const mp_arg_t ILI9341_allowed_args[] = { 
@@ -665,14 +655,12 @@ static mp_obj_t ST7735_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(ST7735_drawPicture_obj, 1, ST7735_drawPicture);
 
-#endif
-
 //---------------------------华丽的分割线-------------------------------------------------------------------
-static mp_obj_t ST7789_deinit(mp_obj_t self_in) {
+static mp_obj_t ST7735_deinit(mp_obj_t self_in) {
 	lcd_spibus_deinit();
 	return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(ST7789_deinit_obj, ST7789_deinit);
+static MP_DEFINE_CONST_FUN_OBJ_1(ST7735_deinit_obj, ST7735_deinit);
 //---------------------------华丽的分割线-------------------------------------------------------------------
 
 static mp_obj_t ST7735_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
@@ -708,8 +696,8 @@ static mp_obj_t ST7735_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 //---------------------------华丽的分割线-------------------------------------------------------------------
 static const mp_rom_map_elem_t ST7735_locals_dict_table[] = {
 	// instance methods
-	{ MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ST7789_deinit_obj) },
-  { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&ST7789_deinit_obj) },
+	{ MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ST7735_deinit_obj) },
+  { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&ST7735_deinit_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&ST7735_drawpFull_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_drawPixel), MP_ROM_PTR(&ST7735_drawpPixel_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_drawLine), MP_ROM_PTR(&ST7735_drawLin_obj) },
@@ -718,9 +706,7 @@ static const mp_rom_map_elem_t ST7735_locals_dict_table[] = {
 	{ MP_ROM_QSTR(MP_QSTR_printStr), MP_ROM_PTR(&ST7735_drawStr_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_write_buf), MP_ROM_PTR(&ST7735_write_buf_obj) },
 	
-	#if MICROPY_PY_PICLIB
 	{ MP_ROM_QSTR(MP_QSTR_Picture), MP_ROM_PTR(&ST7735_drawPicture_obj) },
-	#endif
 };
 static MP_DEFINE_CONST_DICT(ST7735_locals_dict, ST7735_locals_dict_table);
 //---------------------------华丽的分割线-------------------------------------------------------------------
@@ -730,6 +716,3 @@ const mp_obj_type_t ST7735_type = {
     .make_new = ST7735_make_new,
     .locals_dict = (mp_obj_dict_t*)&ST7735_locals_dict,
 };
-
-//-------------------------------------------------------------------------------------------
-#endif

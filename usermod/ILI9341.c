@@ -35,22 +35,14 @@
 #include "py/stream.h"
 #include "shared/runtime/pyexec.h"
 
-#if (MICROPY_HW_LCD32 & MICROPY_ENABLE_TFTLCD)
-	
 #include "modtftlcd.h"
-
 #include "lcd_spibus.h"
-
 #include "ILI9341.h"
-
 #include "global.h"
 
-#ifdef MICROPY_PY_PICLIB
+// Explicitly loaded
 #include "piclib.h"
 #define PICLIB_PY_QSTR (1)
-#else
-#define PICLIB_PY_QSTR (0)
-#endif
 
 /*The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct. */
 typedef struct {
@@ -668,9 +660,8 @@ static mp_obj_t ILI9341_drawStr(size_t n_args, const mp_obj_t *pos_args, mp_map_
 static MP_DEFINE_CONST_FUN_OBJ_KW(ILI9341_drawStr_obj, 1, ILI9341_drawStr);
 //---------------------------华丽的分割线-------------------------------------------------------------------
 
-#if MICROPY_PY_PICLIB
 // cached file
-mp_obj_t ILI9341_CachePicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ILI9341_CachePicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
   static const mp_arg_t tft_allowed_args[] = { 
 	{ MP_QSTR_file,     MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
@@ -758,8 +749,6 @@ static mp_obj_t ILI9341_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(ILI9341_drawPicture_obj, 1, ILI9341_drawPicture);
 
-#endif
-
 //---------------------------华丽的分割线-------------------------------------------------------------------
 static mp_obj_t ILI9341_deinit(mp_obj_t self_in) {
 	lcd_spibus_deinit();
@@ -809,14 +798,9 @@ static const mp_rom_map_elem_t ILI9341_locals_dict_table[] = {
 	{ MP_ROM_QSTR(MP_QSTR_drawRect), MP_ROM_PTR(&ILI9341_drawRect_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_drawCircle), MP_ROM_PTR(&ILI9341_drawCircle_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_printStr), MP_ROM_PTR(&ILI9341_drawStr_obj) },
-	
 	{ MP_ROM_QSTR(MP_QSTR_write_buf), MP_ROM_PTR(&ILI9341_write_buf_obj) },
-	
-	
-	#if MICROPY_PY_PICLIB
 	{ MP_ROM_QSTR(MP_QSTR_Picture), MP_ROM_PTR(&ILI9341_drawPicture_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_CachePicture), MP_ROM_PTR(&ILI9341_CachePicture_obj) },
-	#endif
 };
 static MP_DEFINE_CONST_DICT(ILI9341_locals_dict, ILI9341_locals_dict_table);
 //---------------------------华丽的分割线-------------------------------------------------------------------
@@ -826,6 +810,3 @@ const mp_obj_type_t ILI9341_type = {
     .make_new = ILI9341_make_new,
     .locals_dict = (mp_obj_dict_t*)&ILI9341_locals_dict,
 };
-
-//-------------------------------------------------------------------------------------------
-#endif
