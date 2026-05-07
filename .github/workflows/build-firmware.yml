@@ -2,7 +2,7 @@ name: Build pyController Firmware
 
 on:
   push:
-    branches: [ main, master ]
+    branches:[ main, master ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch: # Allows manual trigger from GitHub UI
@@ -16,11 +16,11 @@ jobs:
         with:
           path: pycontroller
 
-      - name: Checkout MicroPython v1.28.0
+      - name: Checkout MicroPython
         uses: actions/checkout@v4
         with:
           repository: micropython/micropython
-          ref: v1.28.0  # <--- Changed this to target exactly v1.28.0
+          ref: master  # Using master ensures we have the latest features
           path: micropython
 
       - name: Install System Dependencies
@@ -30,8 +30,8 @@ jobs:
 
       - name: Setup ESP-IDF
         run: |
-          # ESP-IDF v5.2.2 is the recommended toolchain for this MicroPython era
-          git clone -b v5.2.2 --recursive https://github.com/espressif/esp-idf.git
+          # MicroPython now requires ESP-IDF v5.3.x or higher!
+          git clone -b v5.3.1 --recursive https://github.com/espressif/esp-idf.git
           cd esp-idf
           ./install.sh
 
@@ -44,7 +44,9 @@ jobs:
         run: |
           source esp-idf/export.sh
           cd micropython/ports/esp32
-          make submodules
+          
+          # Fetch submodules specifically for the S3 board
+          make BOARD=ESP32_GENERIC_S3 submodules
           
           # Compile the standard ESP32-S3 Generic board but inject your LCD C Modules
           make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=../../../pycontroller/usermod/micropython.cmake -j$(nproc)
