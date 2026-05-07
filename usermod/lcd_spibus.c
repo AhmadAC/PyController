@@ -55,7 +55,7 @@
 
 lcd_spibus_t *lcd_spibus = NULL;
 
-STATIC bool is_init = 0;
+static bool is_init = 0;
 
 static void lcd_global_init(gpio_num_t gpio,gpio_mode_t io_mode)
 {
@@ -83,7 +83,7 @@ uint16_t get_rgb565(uint8_t r_color, uint8_t g_color , uint8_t b_color)
 	return (uint16_t) (R_color | G_color | B_color);
 }
 
-STATIC void lcd_spibus_init(lcd_spibus_t *self)
+static void lcd_spibus_init(lcd_spibus_t *self)
 {
 	esp_err_t ret;
 	spi_bus_config_t buscfg={

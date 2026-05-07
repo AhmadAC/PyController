@@ -22,19 +22,10 @@
 #include "py/builtin.h"
 #include "py/stream.h"
 
-#if MICROPY_HW_LCD32
+// Removed conditional wrappers around includes so the QSTR extractor can read the file
 #include "ILI9341.h"
-#endif
-
-#if MICROPY_HW_LCD15
 #include "ST7789.h"
-#endif
-
-#if MICROPY_HW_LCD18
 #include "ST7735.h"
-#endif
-
-#if MICROPY_ENABLE_TFTLCD
 
 #include "modtftlcd.h"
 #include "font.h"
@@ -249,7 +240,6 @@ void grap_drawFill(uint16_t x,uint16_t y,uint16_t width,uint16_t height,uint16_t
 	draw_global->callDrawFill(x,y,width,height,color);
 }
 //------------------------------------------------------------------------------------------------------
-#if MICROPY_PY_PICLIB
 
 //显示成功返回0，其他失败
 uint8_t grap_drawCached(const Graphics_Display *display,
@@ -269,162 +259,3 @@ uint8_t grap_drawCached(const Graphics_Display *display,
 	uint16_t *d_color;
 	
 	hardbuf=(uint8_t*)m_malloc(8);
-
-	int errcode = 0;
-	mp_obj_t args[2] = {
-		mp_obj_new_str(filename, strlen(filename)),
-		MP_OBJ_NEW_QSTR(MP_QSTR_rb),
-	};
-	mp_obj_t open_file = mp_vfs_open(MP_ARRAY_SIZE(args), &args[0], (mp_map_t *)&mp_const_empty_map);
-
-	mp_stream_posix_read(open_file, hardbuf, 8);
-
-	if(errcode == 0){
-		image2lcd = (IMAGE2LCD *)hardbuf;
-		display_w = image2lcd->w;
-		display_h = image2lcd->h;
-
-		vp_line = display_h / rowcnt;
-		vp_dot = display_h % rowcnt; //最后剩余的行数
-		if(vp_line == 0){
-			rowcnt = vp_dot;
-		} 
-		
-		readlen = display_w * 2 * rowcnt; //
-		databuf=(uint8_t*)m_malloc(readlen);		//开辟readlen字节的内存区域
-		
-		if(databuf == NULL)
-		{
-			m_free(databuf);
-			errcode = 1;
-			goto error;
-		}else
-		{
-			i=0;
-			for(i=0; i < (display_h/rowcnt); i++)
-			{
-				mp_stream_posix_read(open_file, (uint8_t *)databuf, readlen);
-				d_color = (uint16_t *)&databuf[0];
-				display->callDrawFlush(x, y+i*rowcnt, x+display_w, rowcnt, d_color);
-			}
-			if(vp_dot)
-			{
-				readlen = display_w * 2 * vp_dot; //
-				mp_stream_posix_read(open_file, (uint8_t *)databuf, readlen);
-				d_color = (uint16_t *)&databuf[0];
-				display->callDrawFlush(x, y+i*rowcnt, x+display_w, vp_dot, d_color);
-			}
-		}
-		m_free(databuf);
-	}
-	
-error:
-	mp_stream_close(open_file);
-	m_free(hardbuf);
-	return errcode;
-}
-
-// new cached file
-uint8_t grap_newCached(const Graphics_Display *display, 
-								mp_obj_t stream ,const char *filename, uint16_t width, uint16_t height)
-{
-static mp_obj_t f_new;
-//------------------------------------------------
-	uint16_t display_w,display_h;
-	uint16_t *r_buf;    		//数据读取存 
-	uint16_t i=0,j = 0;
-	uint8_t bar = 0;
-	uint8_t last_bar = 0;
-
-	ssize_t res = 0;
-
-	uint8_t hard_buf[8] = {0x00,0X10,0x00,0x00,0x00,0x00,0X01,0X1B};
-
-	hard_buf[2] = (uint8_t)width;
-	hard_buf[3] = (uint8_t)(width >> 8);
-	hard_buf[4] = (uint8_t)height;
-	hard_buf[5] = (uint8_t)(height >> 8);
-
-	printf("start loading:0%%\r\n");
-	
-	display_w = width;
-	display_h = height;
-
-	r_buf = (uint16_t *)m_malloc(display_w);
-	if(r_buf == NULL){
-		mp_raise_ValueError(MP_ERROR_TEXT("malloc r_buf error"));
-	}
-	
-	mp_obj_t args[2] = {
-		mp_obj_new_str(filename, strlen(filename)),
-		MP_OBJ_NEW_QSTR(MP_QSTR_wb),
-	};
-	
-	printf("start open:%s\r\n",filename);
-	
-	f_new = mp_vfs_open(MP_ARRAY_SIZE(args), &args[0], (mp_map_t *)&mp_const_empty_map);
-	
-	res = mp_stream_posix_write(f_new, (uint8_t*)hard_buf, 8);
-	
-	if(res != 8){
-		mp_stream_close(f_new);
-		mp_raise_ValueError(MP_ERROR_TEXT("file write hard error"));
-	}
-	//mp_stream_close(f_new);
-	printf("newCached\r\n");
-	//return 0;
-	for(i =0; i < display_h; i++)
-	{
-		for(j =0; j<display_w; j++){
-			r_buf[j] = display->callReadPoint(j , i);
-		}
-		res = mp_stream_posix_write(f_new, (uint8_t*)r_buf, display_w*2);
-		if(res != display_w){
-			grap_drawStr(display, 0,0,12*17,25,24,"Cache Error!     ",RED, WHITE);
-			mp_stream_close(f_new);
-			mp_raise_ValueError(MP_ERROR_TEXT("file write hard error"));
-		}
-		bar = (i*100)/display_h;
-		if((bar != last_bar) && !(bar%10)) printf("loading:%d%%\r\n",bar);
-
-		if(i==25){
-			grap_drawStr(display, 0,0,12*17,25,24,"Image Caching:00%",RED, WHITE);
-		}
-		if((i >= 25) && (bar != last_bar)){
-			//grap_drawChar(display,168,0,bar,2,24,RED, WHITE);
-		}
-		last_bar = bar;
-	}
-	grap_drawStr(display, 0, 0, 12*17, 25, 24,"Cache Done!      ",RED, WHITE);
-	
-	printf("cache done!\r\n");
-
-	mp_stream_close(f_new);
-	m_free(r_buf);
-
-  return 0;
-}
-
-#endif
-
-STATIC const mp_rom_map_elem_t tftlcd_module_globals_table[] = {
-	{ MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_tftlcd) },
-	
-	#if (MICROPY_HW_LCD32)
-	{ MP_ROM_QSTR(MP_QSTR_LCD32), MP_ROM_PTR(&ILI9341_type) },
-	{ MP_ROM_QSTR(MP_QSTR_LCD24), MP_ROM_PTR(&ILI9341_type) },
-	#endif
-	#if (MICROPY_HW_LCD15)
-	{ MP_ROM_QSTR(MP_QSTR_LCD15), MP_ROM_PTR(&ST7789_type) },
-	#endif
-	#if (MICROPY_HW_LCD18)
-	{ MP_ROM_QSTR(MP_QSTR_LCD18), MP_ROM_PTR(&ST7735_type) },
-	#endif
-};
-STATIC MP_DEFINE_CONST_DICT(tftlcd_module_globals, tftlcd_module_globals_table);
-
-const mp_obj_module_t tftlcd_module = {
-		.base = { &mp_type_module },
-		.globals = (mp_obj_dict_t *)&tftlcd_module_globals,
-};
-#endif

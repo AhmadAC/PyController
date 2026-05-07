@@ -58,9 +58,9 @@ typedef struct {
 
 Graphics_Display st7789_glcd;
 
-STATIC lcd_spibus_t *p_st7789 = NULL;
+static lcd_spibus_t *p_st7789 = NULL;
 
-DRAM_ATTR STATIC const lcd_init_cmd_t st7789_init_cmds[]={
+DRAM_ATTR static const lcd_init_cmd_t st7789_init_cmds[]={
 
 		{0x3A, {0x05}, 1},  /*Pixel Format Set*/
 		{0xB2, {0x0C, 0x0C, 0x00, 0x33, 0x33}, 5},
@@ -315,7 +315,7 @@ Graphics_Display st7789_glcd =
 };
 //==============================================================================================
 //mpy
-STATIC mp_obj_t ST7789_drawpPixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ST7789_drawpPixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 	static const mp_arg_t drawp_args[] = {
 			{ MP_QSTR_x,       MP_ARG_INT, {.u_int = 0} },
 			{ MP_QSTR_y,       MP_ARG_INT, {.u_int = 0} },
@@ -338,9 +338,9 @@ STATIC mp_obj_t ST7789_drawpPixel(size_t n_args, const mp_obj_t *pos_args, mp_ma
 	}
   return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawpPixel_obj, 1, ST7789_drawpPixel);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawpPixel_obj, 1, ST7789_drawpPixel);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawpFull(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)  {
+static mp_obj_t ST7789_drawpFull(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)  {
 	static const mp_arg_t clear_args[] = {
 			{ MP_QSTR_fillcolor,    MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
 	};
@@ -363,9 +363,9 @@ STATIC mp_obj_t ST7789_drawpFull(size_t n_args, const mp_obj_t *pos_args, mp_map
 	}
   return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawpFull_obj, 1, ST7789_drawpFull);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawpFull_obj, 1, ST7789_drawpFull);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawLin(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ST7789_drawLin(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t drawL_args[] = {
 				{ MP_QSTR_x0,        	MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_y0,       	MP_ARG_INT, {.u_int = 0} },
@@ -390,11 +390,11 @@ STATIC mp_obj_t ST7789_drawLin(size_t n_args, const mp_obj_t *pos_args, mp_map_t
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawLin_obj, 4, ST7789_drawLin);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawLin_obj, 4, ST7789_drawLin);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawRect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ST7789_drawRect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-  STATIC const mp_arg_t Rect_args[] = {
+  static const mp_arg_t Rect_args[] = {
 		{ MP_QSTR_x,        		MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_y,        		MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_width,     		MP_ARG_INT, {.u_int = 0} },
@@ -438,10 +438,10 @@ STATIC mp_obj_t ST7789_drawRect(size_t n_args, const mp_obj_t *pos_args, mp_map_
   }
   return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawRect_obj, 1, ST7789_drawRect);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawRect_obj, 1, ST7789_drawRect);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawCircle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-  STATIC const mp_arg_t tft_allowed_args[] = {
+static mp_obj_t ST7789_drawCircle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+  static const mp_arg_t tft_allowed_args[] = {
 	{ MP_QSTR_x, 			 			MP_ARG_INT, {.u_int = 0} },
 	{ MP_QSTR_y, 			 			MP_ARG_INT, {.u_int = 0} },
 	{ MP_QSTR_radius, 	 		MP_ARG_INT, {.u_int = 0} },
@@ -492,11 +492,11 @@ STATIC mp_obj_t ST7789_drawCircle(size_t n_args, const mp_obj_t *pos_args, mp_ma
   }
   return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawCircle_obj, 1, ST7789_drawCircle);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawCircle_obj, 1, ST7789_drawCircle);
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawStr(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ST7789_drawStr(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-  STATIC const mp_arg_t tft_allowed_args[] = {
+  static const mp_arg_t tft_allowed_args[] = {
 	{ MP_QSTR_text,     		MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     { MP_QSTR_x,        		MP_ARG_REQUIRED |MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_y,        		MP_ARG_REQUIRED |MP_ARG_INT, {.u_int = 0} },
@@ -575,11 +575,11 @@ STATIC mp_obj_t ST7789_drawStr(size_t n_args, const mp_obj_t *pos_args, mp_map_t
   }
   return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawStr_obj, 1, ST7789_drawStr);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawStr_obj, 1, ST7789_drawStr);
 
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_write_buf(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t ST7789_write_buf(size_t n_args, const mp_obj_t *args) {
 	if(6 != n_args) {
 		mp_raise_ValueError(MP_ERROR_TEXT("lcd write_buf parameter error \n"));
 	}
@@ -601,15 +601,15 @@ STATIC mp_obj_t ST7789_write_buf(size_t n_args, const mp_obj_t *args) {
 
     return mp_obj_new_int(1);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(ST7789_write_buf_obj, 1, 6, ST7789_write_buf);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(ST7789_write_buf_obj, 1, 6, ST7789_write_buf);
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
 #if MICROPY_PY_PICLIB
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ST7789_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-  STATIC const mp_arg_t ILI9341_allowed_args[] = { 
+  static const mp_arg_t ILI9341_allowed_args[] = { 
     { MP_QSTR_x,       MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_y,       MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_file,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
@@ -676,19 +676,19 @@ STATIC mp_obj_t ST7789_drawPicture(size_t n_args, const mp_obj_t *pos_args, mp_m
   }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawPicture_obj, 1, ST7789_drawPicture);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ST7789_drawPicture_obj, 1, ST7789_drawPicture);
 
 #endif
 
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC mp_obj_t ST7789_deinit(mp_obj_t self_in) {
+static mp_obj_t ST7789_deinit(mp_obj_t self_in) {
 	lcd_spibus_deinit();
 	return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ST7789_deinit_obj, ST7789_deinit);
+static MP_DEFINE_CONST_FUN_OBJ_1(ST7789_deinit_obj, ST7789_deinit);
 //---------------------------华丽的分割线-------------------------------------------------------------------
 
-STATIC mp_obj_t ST7789_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+static mp_obj_t ST7789_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
 
 	enum { ARG_portrait };
 	static const mp_arg_t allowed_args[] = {
@@ -722,7 +722,7 @@ STATIC mp_obj_t ST7789_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 	return MP_OBJ_FROM_PTR(self);
 }
 //---------------------------华丽的分割线-------------------------------------------------------------------
-STATIC const mp_rom_map_elem_t ST7789_locals_dict_table[] = {
+static const mp_rom_map_elem_t ST7789_locals_dict_table[] = {
 	// instance methods
 	{ MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ST7789_deinit_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&ST7789_deinit_obj) },
@@ -741,7 +741,7 @@ STATIC const mp_rom_map_elem_t ST7789_locals_dict_table[] = {
 	{ MP_ROM_QSTR(MP_QSTR_Picture), MP_ROM_PTR(&ST7789_drawPicture_obj) },
 	#endif
 };
-STATIC MP_DEFINE_CONST_DICT(ST7789_locals_dict, ST7789_locals_dict_table);
+static MP_DEFINE_CONST_DICT(ST7789_locals_dict, ST7789_locals_dict_table);
 //---------------------------华丽的分割线-------------------------------------------------------------------
 const mp_obj_type_t ST7789_type = {
     { &mp_type_type },
