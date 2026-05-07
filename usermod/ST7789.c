@@ -694,4 +694,48 @@ static mp_obj_t ST7789_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 	lcd_spibus_t *self = m_new_obj(lcd_spibus_t);
 	
 	lcddev.width=240;
-	lcddev.heigh
+	lcddev.height=240;
+	st7789_glcd.width = lcddev.width;
+	st7789_glcd.height = lcddev.height;
+	
+	mp_init_ST7789();
+	
+	self = p_st7789;
+	self->base.type = type;
+	
+	st7789_set_dir(args[ARG_portrait].u_int);
+	
+	lcddev.type = 5;
+	lcddev.backcolor = 0x0000;
+
+	st7789_Fill(0,0,lcddev.width,lcddev.height,lcddev.backcolor);
+
+	lcddev.clercolor = lcddev.backcolor;
+	draw_global = &st7789_glcd;
+	return MP_OBJ_FROM_PTR(self);
+}
+//---------------------------华丽的分割线-------------------------------------------------------------------
+static const mp_rom_map_elem_t ST7789_locals_dict_table[] = {
+	// instance methods
+	{ MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ST7789_deinit_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&ST7789_deinit_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&ST7789_drawpFull_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_drawPixel), MP_ROM_PTR(&ST7789_drawpPixel_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_drawLine), MP_ROM_PTR(&ST7789_drawLin_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_drawRect), MP_ROM_PTR(&ST7789_drawRect_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_drawCircle), MP_ROM_PTR(&ST7789_drawCircle_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_printStr), MP_ROM_PTR(&ST7789_drawStr_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_write_buf), MP_ROM_PTR(&ST7789_write_buf_obj) },
+	#if MICROPY_PY_PICLIB
+	{ MP_ROM_QSTR(MP_QSTR_Picture), MP_ROM_PTR(&ST7789_drawPicture_obj) },
+	#endif
+};
+static MP_DEFINE_CONST_DICT(ST7789_locals_dict, ST7789_locals_dict_table);
+//---------------------------华丽的分割线-------------------------------------------------------------------
+MP_DEFINE_CONST_OBJ_TYPE(
+    ST7789_type,
+    MP_QSTR_ST7789,
+    MP_TYPE_FLAG_NONE,
+    make_new, ST7789_make_new,
+    locals_dict, &ST7789_locals_dict
+);
