@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -46,7 +46,7 @@ jobs:
           
           make BOARD=ESP32_GENERIC_S3 submodules
           
-          # Updated: Passing the directory path to USER_C_MODULES instead of the file
+          # Pass the directory to USER_C_MODULES
           make BOARD=ESP32_GENERIC_S3 USER_C_MODULES=$GITHUB_WORKSPACE/pycontroller/usermod -j$(nproc)
           
           BUILD_DATE=$(date +%Y%m%d)
