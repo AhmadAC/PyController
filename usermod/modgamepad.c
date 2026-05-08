@@ -78,7 +78,7 @@ bit1	RB
 bit0	LB
 ****************************************************************/
 #define COEFF	14
-STATIC mp_obj_t gamepad_read(mp_obj_t self_in)
+static mp_obj_t gamepad_read(mp_obj_t self_in)
 {
 
 	uint16_t leftX=0,leftY=0,rightX =0,rightY=0;
@@ -116,20 +116,21 @@ STATIC mp_obj_t gamepad_read(mp_obj_t self_in)
 #endif
 	tuple[7] = mp_obj_new_int(0x06);
 	return mp_obj_new_tuple(8, tuple);
-}STATIC MP_DEFINE_CONST_FUN_OBJ_1(gamepad_read_obj, gamepad_read);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(gamepad_read_obj, gamepad_read);
 
 //----------------------------------------------------------------------------------
 
-STATIC mp_obj_t gamepad_deinit(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t gamepad_deinit(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
 
 	return mp_const_true;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(gamepad_deinit_obj,0, gamepad_deinit);
+static MP_DEFINE_CONST_FUN_OBJ_KW(gamepad_deinit_obj,0, gamepad_deinit);
 
 //----------------------------------------------------------------------------------
-STATIC mp_obj_t gamepad_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t gamepad_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
 	mp_arg_check_num(n_args, n_kw, 0, MP_OBJ_FUN_ARGS_MAX, true);
 	#if MICROPY_ENABLE_PSXCONTROLLER
@@ -143,19 +144,20 @@ STATIC mp_obj_t gamepad_make_new(const mp_obj_type_t *type, size_t n_args, size_
 }
 
 /******************************************************************************/
-STATIC const mp_rom_map_elem_t gamepad_locals_dict_table[] = {
+static const mp_rom_map_elem_t gamepad_locals_dict_table[] = {
 	
 	{ MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_game_nes) },
 	{ MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&gamepad_deinit_obj) },
 	{ MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&gamepad_read_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(gamepad_locals_dict,gamepad_locals_dict_table);
+static MP_DEFINE_CONST_DICT(gamepad_locals_dict,gamepad_locals_dict_table);
 
-const mp_obj_type_t controller_gamepad_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_CONTROLLER,
-    .make_new = gamepad_make_new,
-    .locals_dict = (mp_obj_dict_t *)&gamepad_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(
+    controller_gamepad_type,
+    MP_QSTR_CONTROLLER,
+    MP_TYPE_FLAG_NONE,
+    make_new, gamepad_make_new,
+    locals_dict, &gamepad_locals_dict
+);
 
 #endif
