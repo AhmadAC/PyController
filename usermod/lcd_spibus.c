@@ -1,10 +1,10 @@
 /********************************************************************************
  * Copyright (C), 2021 - 2022, 01studio Tech. Co., Ltd.https://www.01studio.cc/
- * File Name				:	lcd_spibus.c (Modified for pyController & ESP-IDFv5)
+ * File Name				:	lcd_spibus.c 
  * Author				:	Folktale
  * Version				:	v1.1
  * date					:	2021/9/22
- * Description			:	
+ * Description			:	Updated for ESP-IDF v5
  ******************************************************************************/
 
 #include "mpconfigboard.h"
@@ -13,7 +13,7 @@
 #include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
-#include "driver/rtc_io.h"
+// REMOVED: #include "driver/rtc_io.h" - Removed in ESP-IDF v5
 
 #include "py/obj.h"
 #include <math.h>
@@ -59,15 +59,11 @@ static bool is_init = 0;
 
 static void lcd_global_init(gpio_num_t gpio,gpio_mode_t io_mode)
 {
-	if (rtc_gpio_is_valid_gpio(gpio)) {
-		rtc_gpio_deinit(gpio);
-	}
-
-    // This is the modern ESP-IDF v5 replacement for gpio_pad_select_gpio
+    // Modern ESP-IDF v5 replacement for rtc_gpio_deinit() and gpio_pad_select_gpio()
 	gpio_reset_pin(gpio);
 	gpio_set_direction(gpio, io_mode);
 	gpio_pulldown_dis(gpio);
-	gpio_pullup_dis(gpio); // Most LCDs don't need pullups on control lines
+	gpio_pullup_dis(gpio); 
 
 	if (GPIO_IS_VALID_OUTPUT_GPIO(gpio)) {
 		gpio_hold_dis(gpio);
@@ -177,18 +173,16 @@ void  lcd_bus_init(void)
             return;
 		}
 		lcd_spibus_t *self = lcd_spibus;
-		self->mhz			= 50; // ESP32-S3 can handle high speeds
+		self->mhz			= 50; 
 		self->spi 		    = NULL;
 		self->spihost	    = LCD_HOST;
         
-        // --- Pins hardcoded from pyController v1.0 schematic ---
-		self->miso 		= -1;     // Schematic does not show MISO connected
-		self->mosi 		= 41;     // SDA
-		self->clk  		= 40;     // SCL
-		self->cs   		= 39;     // CS
-		self->dc   		= 38;     // D/C
-		self->rst  		= 42;     // RST
-        // ----------------------------------------------------
+		self->miso 		= LCD_PIN_MISO;
+		self->mosi 		= LCD_PIN_MOSI;
+		self->clk  		= LCD_PIN_CLK;
+		self->cs   		= LCD_PIN_CS;
+		self->dc   		= LCD_PIN_DC;
+		self->rst  		= LCD_PIN_RST;
 
 		lcd_spibus_init(self);
 		
@@ -197,7 +191,7 @@ void  lcd_bus_init(void)
 		
 		//Reset the display
 		gpio_set_level(self->rst, 0);
-        // Modern FreeRTOS replacement for portTICK_RATE_MS
+		// Replaced deprecated portTICK_RATE_MS with portTICK_PERIOD_MS
 		vTaskDelay(100 / portTICK_PERIOD_MS);
 		gpio_set_level(self->rst, 1);
 		vTaskDelay(100 / portTICK_PERIOD_MS);
