@@ -1,9 +1,9 @@
 # usermod/micropython.cmake
 
-add_library(usermod_pycontroller_lcd INTERFACE)
+add_library(usermod_pycontroller INTERFACE)
 
-# Add all your .c files here
-target_sources(usermod_pycontroller_lcd INTERFACE
+# Add all your .c files here (LCD + Controller)
+target_sources(usermod_pycontroller INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/global.c
     ${CMAKE_CURRENT_LIST_DIR}/lcd_spibus.c
     ${CMAKE_CURRENT_LIST_DIR}/modtftlcd.c
@@ -13,24 +13,15 @@ target_sources(usermod_pycontroller_lcd INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/piclib.c
     ${CMAKE_CURRENT_LIST_DIR}/bmp.c
     ${CMAKE_CURRENT_LIST_DIR}/tjpgd.c
+    ${CMAKE_CURRENT_LIST_DIR}/modcontroller.c
+    ${CMAKE_CURRENT_LIST_DIR}/modgamepad.c
+    ${CMAKE_CURRENT_LIST_DIR}/psxcontroller.c
 )
 
 # Tell the compiler where to find the .h files
-target_include_directories(usermod_pycontroller_lcd INTERFACE
+target_include_directories(usermod_pycontroller INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}
 )
 
-# Enable all LCD and Picture features
-target_compile_definitions(usermod_pycontroller_lcd INTERFACE
-    MICROPY_ENABLE_TFTLCD=1
-    MICROPY_HW_LCD32=1
-    MICROPY_HW_LCD15=1
-    MICROPY_HW_LCD18=1
-    MICROPY_STRING_SIZE_24=1
-    MICROPY_STRING_SIZE_32=1
-    MICROPY_STRING_SIZE_48=1
-    MICROPY_PY_PICLIB=1 
-)
-
 # Link your custom module to the main MicroPython build
-target_link_libraries(usermod INTERFACE usermod_pycontroller_lcd)
+target_link_libraries(usermod INTERFACE usermod_pycontroller)
