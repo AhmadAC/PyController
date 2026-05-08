@@ -143,4 +143,19 @@ STATIC mp_obj_t gamepad_make_new(const mp_obj_type_t *type, size_t n_args, size_
 }
 
 /******************************************************************************/
-STATIC const mp_rom_map_elem_t gamepad_locals_dict_table
+STATIC const mp_rom_map_elem_t gamepad_locals_dict_table[] = {
+	
+	{ MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_game_nes) },
+	{ MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&gamepad_deinit_obj) },
+	{ MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&gamepad_read_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(gamepad_locals_dict,gamepad_locals_dict_table);
+
+const mp_obj_type_t controller_gamepad_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_CONTROLLER,
+    .make_new = gamepad_make_new,
+    .locals_dict = (mp_obj_dict_t *)&gamepad_locals_dict,
+};
+
+#endif
