@@ -1,0 +1,378 @@
+# pyCar\car.py
+
+# The MIT License (MIT)
+#
+# Copyright (c) 2021 , 01Studio
+
+from machine import Pin,PWM,SoftI2C
+from ssd1306 import SSD1306_I2C     #从ssd1306模块中导入SSD1306_I2C子模块
+import framebuf
+import time
+
+#编码盘计数
+count1 = 0
+count2 = 0
+
+class CAR():
+    
+    #初始化
+    def __init__(self):
+        
+        #电机1 - 左前
+        self.M1_P = PWM(Pin(14), freq=1000, duty=0) 
+        self.M1_N = PWM(Pin(15), freq=1000, duty=0)
+        
+        #电机2 - 右前
+        self.M2_P = PWM(Pin(16), freq=1000, duty=0) 
+        self.M2_N = PWM(Pin(17), freq=1000, duty=0)
+        
+        #电机3 - 右后
+        self.M3_P = PWM(Pin(18), freq=1000, duty=0) 
+        self.M3_N = PWM(Pin(19), freq=1000, duty=0)
+
+        #电机4 - 左后
+        self.M4_P = PWM(Pin(21), freq=1000, duty=0) 
+        self.M4_N = PWM(Pin(22), freq=1000, duty=0)
+
+        #电机速度，默认最大
+        self.duty=1023
+        
+        #车灯      
+        self.light_pin = Pin(5, Pin.OUT)
+
+        #超声波测距
+        self.trig = Pin(27,Pin.OUT)
+        self.echo = Pin(26,Pin.IN)
+        
+        #编码盘测速
+        self.speed = Pin(4,Pin.IN,Pin.PULL_UP)
+        self.speed.irq(self.speed_count,Pin.IRQ_FALLING)
+        self.speed2 = Pin(13,Pin.IN,Pin.PULL_UP)
+        self.speed2.irq(self.speed_count2,Pin.IRQ_FALLING)
+        
+        #巡线传感器初始化，五路光电
+        # ESP32 pins 34, 35, 36, and 39 are input-only and do NOT have internal pull-ups.
+        self.t1 = Pin(33, Pin.IN)
+        self.t2 = Pin(34, Pin.IN)
+        self.t3 = Pin(35, Pin.IN)
+        self.t4 = Pin(36, Pin.IN)
+        self.t5 = Pin(39, Pin.IN)
+        
+        #红外接收头
+        self.IR = Pin(32, Pin.IN)
+        
+        #屏幕
+        self.i2c=SoftI2C(sda=Pin(25), scl=Pin(23))
+        self.oled=SSD1306_I2C(128, 64,self.i2c,addr=0x3c)
+        buf01studio=framebuf.FrameBuffer(bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00g\xf1\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xfc\x1f\xe0\x1f\x03\x80|\x00\x00\x00\x19\x80\x00\x00\x00\x01\xf8\x07\xc0?\x87\x81\xff\x18\x00\x00\x19\xc0\x00\x00\x00\x00\xe0\x03\x809\xc7\x81\xc7\x18\x00\x00\x18\x00\x00\x00\x00\x00\xe1\xc1\xc0p\xc5\x83\x80\x18\x00\x00\x18\x00\x00\x00\x00\x00\xc1\xc0\xc0p\xc1\x83\x80<@\x81\x98\x81\x80\x00\x00\x03\xc0\xc0\xe0p\xc1\x83\x80>a\x87\xf9\xc7\xe0\x00\x00\x07\x80\xc0\xf8p\xc1\x81\xe0\x18a\x87\xf9\x8f\xf0\x00\x00\x07\x80\xc0\xf8p\xc1\x80\xfe\x18a\x8e9\x8e8\x00\x00\x07\x80\xc0\xf8p\xc1\x80\x7f\x18a\x8c\x19\x8c8\x00\x00\x07\x80\xc0\xf8p\xc1\x80\x07\x18a\x8c\x19\x8c8\x00\x00\x01\xc0\xc0\xc0p\xc1\x80\x03\x98a\x8c\x19\x8c\x18\x00\x00\x00\xc0\xc1\xc0p\xc1\x80\x03\x98a\x8c\x19\x8c8\x00\x00\x00\xe0\x01\x801\xc1\x83\x03\x18a\x8e9\x8e8\x00\x00\x00\xf0\x03\xc0?\xc1\x83\xff\x1c\x7f\x8f\xf9\x8f\xf0\x00\x00\x01\xf8\x0f\xc0\x1f\x81\xc1\xfe\x1e?\xc7\xf9\xc7\xe0\x00\x00\x01\xff\x7f\xc0\x0e\x01\x808\x04\x18\x81\x90\x81\x80\x00\x00\x00\xff\xff\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00C\xf1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xbc\x18\x18~\x07\xe0\xc6\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x180\xff\x0f\xf0\xde\x00\x00\x00\x00\x00\x00\x00\x00\x01\xc3\x0c1\xc3\x0c0\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x83\x0c1\x83\x000\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x83\x8ca\x80\x03\xf0\xe0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x81\x86a\x80\x0f\xb0\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x83\x86A\x81\x9c0\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x83\x03\xc1\x83\x980\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\xc7\x03\xc0\xc3\x18p\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\xfe\x03\x80~\x0f\xf0\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x9c\x01\x80<\x07\x18\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x80\x01\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x80\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x80\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),128,64,framebuf.MONO_HLSB)
+        self.oled.blit(buf01studio,0,0)
+        self.oled.show()
+        time.sleep(2)
+        self.s_wifi=0
+        self.s_blue=0
+        self.s_red=0
+        self.s_light=0
+        self.s_forward=0
+        self.s_backward=0
+        self.s_left=0
+        self.s_right=0
+        self.s_sr=0
+        self.s_distance=0
+        self.screen()
+
+    # 编码盘1测速中断回调
+    def speed_count(self, pin):
+        global count1
+        count1 += 1
+        
+    # 编码盘2测速中断回调
+    def speed_count2(self, pin):
+        global count2
+        count2 += 1
+
+    # 控制车灯
+    def light(self, state):
+        self.light_pin.value(state)
+        self.s_light = state
+
+    #屏幕刷新    
+    def screen(self):
+        if self.i2c.scan()[0]==0x3c:
+            self.oled.fill(0)
+            wifibuf=framebuf.FrameBuffer(bytearray(b'\x00\x00\x00\x00\x10\x08\x14(\x14(\x14(\x10\x08\x00\x00\x01\x80\x01\x80\x01\x80\x01\xc0\x03\xc0\x00\x00\x00\x00\x00\x00'),16,16,framebuf.MONO_HLSB)
+            bluetoothbuf=framebuf.FrameBuffer(bytearray(b'\x00\x00\x00\x00\x01\x80\x01\xc0\x05`\x07\xc0\x03\x80\x01\x80\x03\xc0\x05`\x01\xc0\x01\x80\x00\x00\x00\x00\x00\x00\x00\x00'),16,16,framebuf.MONO_HLSB)
+            redbuf=framebuf.FrameBuffer(bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x01\x80\x19\x98\t\x90\x05\xa0\x04 \x00\x00\x03\xc0\x07\xe0\x1f\xf8\x00\x00\x00\x00\x00\x00'),16,16,framebuf.MONO_HLSB)
+            lightbuf=framebuf.FrameBuffer(bytearray(b'\x00\x00\x03\x80\x0c`\x080\x10\x10\x10\x10\x11\x10\x19\x10\t \x05`\x07\xc0\x04@\x04@\x07\xc0\x03\x80\x00\x00'),16,16,framebuf.MONO_HLSB)
+            arrowbuf=framebuf.FrameBuffer(bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xc0\x00\x00\x00\x00\x00\x00\x03\xe0\x00\x00\x00\x00\x00\x00\x07\xf0\x00\x00\x00\x00\x00\x00\x0f\xf8\x00\x00\x00\x00\x00\x00\x0f\xf8\x00\x00\x00\x00\x00\x00\x1e<\x00\x00\x00\x00\x00\x00<\x1e\x00\x00\x00\x00\x00\x00x\x0f\x00\x00\x00\x00\x00\x00x\x0f\x00\x00\x00\x00\x00\x00\xf0\x07\x80\x00\x00\x00\x00\x01\xe0\x03\xc0\x00\x00\x00\x00\x01\xe0\x03\xc0\x00\x00\x00\x00\x01\xfc\x1f\xc0\x00\x00\x00\x00\x01\xfc\x1f\xc0\x00\x00\x00\x00\x00\xfc\x1f\x80\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x0f\x00\x1c\x1c\x00x\x00\x00\x1f\x80\x1c\x1c\x00\xfc\x00\x00\x7f\x80\x1c\x1c\x00\xff\x00\x00\xff\x80\x1c\x1c\x00\xff\x80\x01\xf3\xff\xff\xff\xff\xe7\xc0\x07\xe3\xff\xff\xff\xff\xe3\xf0\x0f\x83\xff\xff\xff\xff\xe0\xf8\x1f\x00\x00\x1f\xfc\x00\x00|>\x00\x00\x1f\xfc\x00\x00>>\x00\x00\x1f\xfc\x00\x00>>\x00\x00\x1f\xfc\x00\x00>\x1f\x00\x00\x1f\xfc\x00\x00|\x0f\x83\xff\xff\xff\xff\xe0\xf8\x07\xe3\xff\xff\xff\xff\xe3\xf0\x01\xf3\xff\xff\xff\xff\xe7\xc0\x00\xff\x80\x1c\x1c\x00\xff\x80\x00\x7f\x80\x1c\x1c\x00\xff\x00\x00\x1f\x80\x1c\x1c\x00\xfc\x00\x00\x0f\x00\x1c\x1c\x00x\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\x1c\x1c\x00\x00\x00\x00\x00\x00\xfc\x1f\x80\x00\x00\x00\x00\x01\xfc\x1f\xc0\x00\x00\x00\x00\x01\xfc\x1f\xc0\x00\x00\x00\x00\x01\xe0\x03\xc0\x00\x00\x00\x00\x01\xe0\x03\xc0\x00\x00\x00\x00\x00\xf0\x07\x80\x00\x00\x00\x00\x00x\x0f\x00\x00\x00\x00\x00\x00x\x0f\x00\x00\x00\x00\x00\x00<\x1e\x00\x00\x00\x00\x00\x00\x1e<\x00\x00\x00\x00\x00\x00\x0f\xf8\x00\x00\x00\x00\x00\x00\x0f\xf8\x00\x00\x00\x00\x00\x00\x07\xf0\x00\x00\x00\x00\x00\x00\x03\xe0\x00\x00\x00\x00\x00\x00\x01\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),64,64,framebuf.MONO_HLSB)
+            
+            if self.s_wifi:
+                self.oled.blit(wifibuf,0,1)
+            if self.s_blue:
+                self.oled.blit(bluetoothbuf,0,17)
+            if self.s_red:
+                self.oled.blit(redbuf,0,31)
+            if self.s_light:
+                self.oled.blit(lightbuf,1,47)
+                
+            self.oled.blit(arrowbuf,17,0)
+            
+            if self.s_forward:
+                self.oled.fill_rect(49,27,26,11,1)
+            if self.s_backward:
+                self.oled.fill_rect(24,27,26,11,1)
+            if self.s_left:
+                self.oled.fill_rect(44,7,11,26,1)
+            if self.s_right:
+                self.oled.fill_rect(44,32,11,26,1)
+            
+            self.oled.text("D:cm", 84,8)
+            self.oled.text("%.2f" % self.s_distance,84,18)
+            self.oled.text("G:cm",84,38)   
+            self.oled.text("%.2f" % self.s_sr,84,48)      
+            self.oled.vline(16,0,64,1)
+            self.oled.vline(82,0,64,1)
+            self.oled.hline(82,32,40,1)
+            self.oled.rect(0,0,128,64,1)
+
+            self.oled.show()
+        else:
+            print('screen connect error!')
+        
+    #调速
+    def setspeed(self,speed):
+        self.duty=speed
+        if self.s_forward==1:
+            self.forward()
+        if self.s_backward==1:
+            self.backward()
+        if self.s_left==1:
+            self.turn_left()
+        if self.s_right==1:
+            self.turn_right()
+
+    # 独立设置四个电机速度 (-1023 到 1023)
+    def set_motors(self, m1, m2, m3, m4):
+        # M1: 左前
+        if m1 >= 0:
+            self.M1_P.duty(min(1023, m1))
+            self.M1_N.duty(0)
+        else:
+            self.M1_P.duty(0)
+            self.M1_N.duty(min(1023, abs(m1)))
+            
+        # M2: 右前
+        if m2 >= 0:
+            self.M2_P.duty(min(1023, m2))
+            self.M2_N.duty(0)
+        else:
+            self.M2_P.duty(0)
+            self.M2_N.duty(min(1023, abs(m2)))
+            
+        # M3: 右后
+        if m3 >= 0:
+            self.M3_P.duty(min(1023, m3))
+            self.M3_N.duty(0)
+        else:
+            self.M3_P.duty(0)
+            self.M3_N.duty(min(1023, abs(m3)))
+            
+        # M4: 左后
+        if m4 >= 0:
+            self.M4_P.duty(min(1023, m4))
+            self.M4_N.duty(0)
+        else:
+            self.M4_P.duty(0)
+            self.M4_N.duty(min(1023, abs(m4)))
+
+    #前进    
+    def forward(self):
+        speed=self.duty
+        self.s_forward=1
+        self.s_backward=0
+        self.s_left=0
+        self.s_right=0
+        
+        self.M1_P.duty(speed)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(speed)
+        self.M2_N.duty(0)
+        self.M3_P.duty(speed)
+        self.M3_N.duty(0)
+        self.M4_P.duty(speed)
+        self.M4_N.duty(0)
+    
+    #后退
+    def backward(self):
+        speed=self.duty
+        self.s_forward=0
+        self.s_backward=1
+        self.s_left=0
+        self.s_right=0
+
+        self.M1_P.duty(0)
+        self.M1_N.duty(speed)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(speed)
+        self.M3_P.duty(0)
+        self.M3_N.duty(speed)
+        self.M4_P.duty(0)
+        self.M4_N.duty(speed)
+
+    #左转
+    def turn_left(self, mode=0):
+        speed=self.duty
+        self.s_forward=0
+        self.s_backward=0
+        self.s_left=1
+        self.s_right=0
+        
+        #普通转向
+        if mode == 0: 
+            self.M1_P.duty(0)
+            self.M1_N.duty(0)    
+            self.M2_P.duty(speed)
+            self.M2_N.duty(0)
+            self.M3_P.duty(speed)
+            self.M3_N.duty(0)
+            self.M4_P.duty(0)
+            self.M4_N.duty(0)
+        
+        #大幅度转向
+        elif mode ==1:
+            self.M1_P.duty(0)
+            self.M1_N.duty(speed)    
+            self.M2_P.duty(speed)
+            self.M2_N.duty(0)
+            self.M3_P.duty(speed)
+            self.M3_N.duty(0)
+            self.M4_P.duty(0)
+            self.M4_N.duty(speed)
+
+    #右转
+    def turn_right(self, mode=0):
+        speed=self.duty
+        self.s_forward=0
+        self.s_backward=0
+        self.s_left=0
+        self.s_right=1
+        #普通转向
+        if mode == 0:
+            self.M1_P.duty(speed)
+            self.M1_N.duty(0)    
+            self.M2_P.duty(0)
+            self.M2_N.duty(0)
+            self.M3_P.duty(0)
+            self.M3_N.duty(0)
+            self.M4_P.duty(speed)
+            self.M4_N.duty(0)
+        #大幅度转向
+        elif mode == 1: 
+            self.M1_P.duty(speed)
+            self.M1_N.duty(0)    
+            self.M2_P.duty(0)
+            self.M2_N.duty(speed)
+            self.M3_P.duty(0)
+            self.M3_N.duty(speed)
+            self.M4_P.duty(speed)
+            self.M4_N.duty(0)
+
+    #停止
+    def stop(self):
+        self.s_forward=0
+        self.s_backward=0
+        self.s_left=0
+        self.s_right=0
+        self.M1_P.duty(0)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(0)
+        self.M3_P.duty(0)
+        self.M3_N.duty(0)
+        self.M4_P.duty(0)
+        self.M4_N.duty(0)
+
+    #####################
+    # Mecanum麦克纳母轮
+    #####################   
+    def up(self): #上移
+        
+        speed=self.duty        
+        self.M1_P.duty(speed)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(speed)
+        self.M2_N.duty(0)
+        self.M3_P.duty(speed)
+        self.M3_N.duty(0)
+        self.M4_P.duty(speed)
+        self.M4_N.duty(0)
+        
+    def down(self): #下移
+        
+        speed=self.duty 
+        self.M1_P.duty(0)
+        self.M1_N.duty(speed)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(speed)
+        self.M3_P.duty(0)
+        self.M3_N.duty(speed)
+        self.M4_P.duty(0)
+        self.M4_N.duty(speed)
+
+    def left(self): #左移
+        
+        speed=self.duty 
+        self.M1_P.duty(0)
+        self.M1_N.duty(speed)    
+        self.M2_P.duty(speed)
+        self.M2_N.duty(0)
+        self.M3_P.duty(0)
+        self.M3_N.duty(speed)
+        self.M4_P.duty(speed)
+        self.M4_N.duty(0)
+
+    def right(self): #右移
+        
+        speed=self.duty 
+        self.M1_P.duty(speed)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(speed)
+        self.M3_P.duty(speed)
+        self.M3_N.duty(0)
+        self.M4_P.duty(0)
+        self.M4_N.duty(speed)
+
+    def up_left(self): #左前移
+        
+        speed=self.duty 
+        self.M1_P.duty(0)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(speed)
+        self.M2_N.duty(0)
+        self.M3_P.duty(0)
+        self.M3_N.duty(0)
+        self.M4_P.duty(speed)
+        self.M4_N.duty(0)
+
+    def up_right(self): #右前移
+        
+        speed=self.duty 
+        self.M1_P.duty(speed)
+        self.M1_N.duty(0)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(0)
+        self.M3_P.duty(speed)
+        self.M3_N.duty(0)
+        self.M4_P.duty(0)
+        self.M4_N.duty(0)
+
+    def down_left(self): #左后移
+        
+        speed=self.duty 
+        self.M1_P.duty(0)
+        self.M1_N.duty(speed)    
+        self.M2_P.duty(0)
+        self.M2_N.duty(0)
+        self.M3_P.duty(0)
+        self.M3_N.duty(speed)
+        self.M4_P.duty(0)
